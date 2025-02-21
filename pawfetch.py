@@ -31,15 +31,24 @@ def get_cpu_info():
     cpu_info = subprocess.check_output("lscpu | grep 'Model name:'", shell=True).decode().strip()
     cpu_name = cpu_info.split(":")[1].strip().lower().split(" @")[0].replace(" cpu", "")
     if "amd" in cpu_name:
-        return cpu_name.replace("amd", "").strip()
+        cpu_name = cpu_name.replace("amd", "").strip()
+        pos = cpu_name.find("-core processor")
+        if pos != -1:
+            space_pos = cpu_name.rfind(" ", 0, pos)
+            if space_pos != -1:
+                cpu_name = cpu_name[:space_pos].strip()
     else:
-        return cpu_name.replace("intel(r) core(tm)", "").replace("cpu @", "").strip()
+        cpu_name = cpu_name.replace("intel(r) core(tm)", "").replace("cpu @", "").strip()
+    return cpu_name
 
 def get_ram_info():
     mem = psutil.virtual_memory()
-    total_memory = mem.total / (1024 ** 3)
+    total_memory_float = mem.total / (1024 ** 3)
+    total_memory = int(total_memory_float)
+    if total_memory_float > total_memory:
+         total_memory += 1
     used_memory = (mem.total - mem.available) / (1024 ** 3)
-    return f"{used_memory:.0f} gb / {total_memory:.0f} gb"
+    return f"{used_memory:.0f} gb / {total_memory} gb"
 
 def get_gpu_info():
     try:
